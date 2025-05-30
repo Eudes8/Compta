@@ -1,2 +1,3 @@
-# Compta
-Logiciel web pour COMPTA FREELANCE 
+Compta
+_______________
+Logiciel web pour COMPTA FREELANCE
