@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Tableau de Bord - {{ dossier.nom_dossier }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 mb-5">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tableau de Bord : {{ dossier.nom_dossier }}</h1>
+        <a href="{% url 'core:home' %}" class="d-none d-sm-inline-block btn btn-sm btn-outline-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-gray-500"></i> Retour Tableau de Bord Global
+        </a>
+    </div>
+
+    <!-- Ligne pour les Indicateurs Clés (KPIs) -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-primary shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-primary text-uppercase mb-1">Statut du Dossier</div>
+                            <div class="h5">{{ dossier.get_statut_dossier_display }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-info-circle fa-2x icon-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-success text-uppercase mb-1">Chiffre d'Affaires (Année N)</div>
+                            <div class="h5">{{ kpi_ca_annee_n|default:"N/A"|floatformat:"0"|intcomma }} FCFA</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x icon-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-info text-uppercase mb-1">Tâches Ouvertes</div>
+                            <div class="h5">{{ kpi_taches_ouvertes_count|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x icon-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-warning text-uppercase mb-1">Prochain Jalon Compta</div>
+                            <div class="h5">{{ kpi_prochain_jalon_compta|default:"À définir" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x icon-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ligne pour les Cartes des Modules -->
+    <h3 class="mt-4 mb-3">Accès aux Modules</h3>
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="{% url 'comptabilite:tableau_bord_compta' dossier_pk=dossier.pk %}" class="card-body stretched-link text-decoration-none text-dark">
+                    <i class="fas fa-calculator module-icon text-primary mb-2"></i>
+                    <h5>Comptabilité (Style Sage)</h5>
+                    <small class="text-muted">Gérer les écritures, états, etc.</small>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="#" class="card-body stretched-link text-decoration-none text-muted disabled" aria-disabled="true">
+                    <i class="fas fa-file-invoice-dollar module-icon mb-2"></i>
+                    <h5>Gestion Commerciale</h5>
+                    <small>(Prochainement)</small>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="#" class="card-body stretched-link text-decoration-none text-muted disabled" aria-disabled="true">
+                    <i class="fas fa-folder-open module-icon mb-2"></i>
+                    <h5>Documents</h5>
+                    <small>(Prochainement)</small>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="#" class="card-body stretched-link text-decoration-none text-muted disabled" aria-disabled="true">
+                    <i class="fas fa-cog module-icon mb-2"></i>
+                    <h5>Paramètres du Dossier</h5>
+                    <small>(Prochainement)</small>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="#" class="card-body stretched-link text-decoration-none text-muted disabled" aria-disabled="true">
+                    <i class="fas fa-users module-icon mb-2"></i>
+                    <h5>Suivi Client (CRM)</h5>
+                    <small>(Prochainement)</small>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100 module-link-card">
+                <a href="{% url 'admin:dossiers_pme_dossierpme_change' dossier.pk %}" target="_blank" class="card-body stretched-link text-decoration-none text-dark">
+                    <i class="fas fa-edit module-icon text-info mb-2"></i>
+                    <h5>Modifier Infos Dossier</h5>
+                    <small>(via Admin)</small>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section optionnelle pour des informations rapides -->
+    <div class="row mt-2">
+        <div class="col-md-12">
+             <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informations Clés du Dossier</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>RCCM:</strong> {{ dossier.numero_rccm|default_if_none:"N/A" }} | <strong>NCC:</strong> {{ dossier.numero_compte_contribuable|default_if_none:"N/A" }}</p>
+                    <p><strong>Forme Juridique:</strong> {{ dossier.get_forme_juridique_display|default_if_none:"N/A" }} | <strong>Régime TVA:</strong> {{ dossier.get_regime_fiscal_tva_display|default_if_none:"N/A" }}</p>
+                    <p><strong>Gestionnaire Principal :</strong> {{ dossier.gestionnaire_principal.username|default_if_none:"Non assigné" }}</p>
+                    <p><strong>Date création entreprise :</strong> {{ dossier.date_creation_entreprise|date:"d/m/Y"|default_if_none:"N/A" }}</p>
+                    <p><strong>Dossier créé le :</strong> {{ dossier.date_creation_dossier_optimagest|date:"d/m/Y H:i" }} | <strong>Dernière modification :</strong> {{ dossier.date_derniere_modification|date:"d/m/Y H:i" }}</p>
+                    {% if dossier.notes_internes %}
+                        <hr>
+                        <h6>Notes internes :</h6>
+                        <p>{{ dossier.notes_internes|linebreaksbr }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

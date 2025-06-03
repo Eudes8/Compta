@@ -1,0 +1,39 @@
+{% extends "base.html" %} <!-- Adaptez -->
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% include "partials/_breadcrumb.html" with niveaux_breadcrumb=niveaux_breadcrumb %} <!-- Adaptez le chemin -->
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{{ page_title }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>Êtes-vous sûr de vouloir supprimer définitivement le journal comptable :</p>
+                    <p class="fs-5"><strong>{{ journal_instance.code_journal }} - {{ journal_instance.libelle }}</strong> ?</p>
+                    
+                    <div class="alert alert-warning small mt-3">
+                        <i class="fas fa-info-circle me-1"></i> Cette action est irréversible.
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'comptabilite:liste_journaux' dossier_pk=dossier.pk %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i> Supprimer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

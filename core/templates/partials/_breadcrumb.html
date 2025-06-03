@@ -1,0 +1,13 @@
+{% if niveaux_breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        {% for niveau in niveaux_breadcrumb %}
+            {% if not forloop.last %}
+                <li class="breadcrumb-item"><a href="{{ niveau.url }}">{{ niveau.label }}</a></li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">{{ niveau.label }}</li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}

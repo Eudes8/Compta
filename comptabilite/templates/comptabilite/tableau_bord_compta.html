@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load l10n %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .kpi-card .card-title { font-size: 1.6rem; font-weight: 600;}
+    .kpi-card .card-text-small { font-size: 0.85rem; }
+    .kpi-card .card-icon { font-size: 2.5rem; opacity: 0.6; }
+    .kpi-card .card-footer a { text-decoration: none; }
+    .kpi-card .card-footer a:hover { text-decoration: underline; }
+    .list-group-item-action:hover { background-color: #f8f9fa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    {% include "partials/_breadcrumb.html" with niveaux=niveaux_breadcrumb %}
+    {% include "partials/_messages.html" %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h1 class="h2 mb-0 me-3">{{ page_title }}</h1>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'comptabilite:plan_comptable' dossier_pk=dossier.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-book me-1"></i>{% trans "Plan Comptable" %}
+            </a>
+             {# TODO: Ajouter un lien vers la liste des journaux #}
+            {# <a href="{% url 'comptabilite:liste_journaux' dossier_pk=dossier.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-list-alt me-1"></i>{% trans "Journaux" %}
+            </a> #}
+            <a href="{% url 'comptabilite:saisie_selection_journal_periode' dossier_pk=dossier.pk %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus-circle me-1"></i>{% trans "Nouvelle Saisie" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de Sélection de Période pour KPIs -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row gx-2 gy-2 align-items-end">
+                <div class="col-md-3">
+                    <label for="selectMoisKPI" class="form-label fw-bold">{% trans "Mois" %}</label>
+                    <select name="mois" id="selectMoisKPI" class="form-select form-select-sm">
+                        {% for mois_val, mois_nom in mois_disponibles %}
+                            <option value="{{ mois_val }}" {% if mois_val == mois_selectionne %}selected{% endif %}>
+                                {{ mois_nom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="selectAnneeKPI" class="form-label fw-bold">{% trans "Année" %}</label>
+                    <select name="annee" id="selectAnneeKPI" class="form-select form-select-sm">
+                        {% for an in annees_disponibles %}
+                            <option value="{{ an }}" {% if an == annee_selectionnee %}selected{% endif %}>{{ an }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-sm btn-secondary w-100">
+                        <i class="fas fa-filter me-1"></i>{% trans "Afficher KPIs" %}
+                    </button>
+                </div>
+                 <div class="col-md-3 text-md-end">
+                    <span class="text-muted fst-italic">
+                        {% trans "Période affichée:" %} {{ premier_jour_periode|date:"M Y" }}
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alertes Comptables -->
+    {% if alertes_comptables %}
+    <div class="mb-4">
+        {% for alerte in alertes_comptables %}
+        <div class="alert alert-{{ alerte.type|default:'warning' }} alert-dismissible fade show" role="alert">
+            <i class="fas {% if alerte.type == 'danger' %}fa-exclamation-triangle{% elif alerte.type == 'warning' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+            {{ alerte.message }}
+            {% if alerte.url and alerte.url != '#' %}
+                <a href="{{ alerte.url }}" class="alert-link small ms-2">{% trans "Voir détail" %} <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Section des KPIs -->
+    <h3 class="h4 mb-3">{% trans "Indicateurs Clés" %} <small class="text-muted fs-6">({% trans "Période" %}: {{ premier_jour_periode|date:"F Y" }})</small></h3>
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-primary shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{% trans "Écritures Période" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_nombre_ecritures_periode|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-exchange-alt fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 text-center">
+                    <a href="#" class="text-primary">{% trans "Voir les écritures" %} <i class="fas fa-arrow-circle-right"></i></a> {# TODO #}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-success shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{% trans "Total Débits Période" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_total_debits_periode|floatformat:0|intcomma }}</div>
+                            <span class="text-muted card-text-small">XOF</span>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-arrow-down fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+                 <div class="card-footer bg-transparent border-top-0 text-center">
+                    <a href="#" class="text-success">{% trans "Détail débits" %} <i class="fas fa-arrow-circle-right"></i></a> {# TODO #}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-info shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{% trans "Total Crédits Période" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_total_credits_periode|floatformat:0|intcomma }}</div>
+                            <span class="text-muted card-text-small">XOF</span>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-arrow-up fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+                 <div class="card-footer bg-transparent border-top-0 text-center">
+                    <a href="#" class="text-info">{% trans "Détail crédits" %} <i class="fas fa-arrow-circle-right"></i></a> {# TODO #}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-secondary shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">{% trans "Solde Période" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title {% if kpi_solde_periode > 0 %}text-success{% elif kpi_solde_periode < 0 %}text-danger{% endif %}">{{ kpi_solde_periode|floatformat:0|intcomma }}</div>
+                            <span class="text-muted card-text-small">XOF</span>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-balance-scale-right fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="h4 mb-3">{% trans "Informations Générales du Dossier" %}</h3>
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-dark shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">{% trans "Comptes Actifs (Plan)" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_nombre_comptes_plan|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-book-open fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-warning shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{% trans "Solde Trésorerie (Global)" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_solde_tresorerie_global|floatformat:0|intcomma }}</div>
+                             <span class="text-muted card-text-small">XOF</span>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-wallet fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-info shadow-sm h-100">
+                 <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{% trans "Journaux Actifs" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_nombre_journaux_actifs|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-list-alt fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card kpi-card border-success shadow-sm h-100">
+                 <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{% trans "Tiers Actifs" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800 card-title">{{ kpi_nombre_tiers_actifs|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300 card-icon"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="far fa-clock me-2"></i>{% trans "Dernières Écritures Enregistrées" %}</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">{% trans "Voir Toutes les Écritures" %}</a> {# TODO: Lien vers liste des écritures #}
+                </div>
+                {% if dernieres_ecritures %}
+                <div class="list-group list-group-flush">
+                    {% for ecriture in dernieres_ecritures %}
+                    <a href="#" class="list-group-item list-group-item-action"> {# TODO: Lien vers la pièce ou sa modification #}
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {{ ecriture.libelle_piece|truncatechars:60 }} 
+                                {% if ecriture.numero_piece %}
+                                    <small class="text-muted fw-normal">({% trans "Pièce N°" %} {{ ecriture.numero_piece }})</small>
+                                {% else %}
+                                     <small class="text-muted fw-normal">({% trans "Pièce ID" %} {{ ecriture.pk }})</small>
+                                {% endif %}
+                            </h6>
+                            <small class="text-{% if ecriture.est_equilibree %}success{% else %}danger{% endif %} fw-bold">
+                                {% if ecriture.est_equilibree %}<i class="fas fa-check-circle me-1"></i>{% trans "Équil." %}{% else %}<i class="fas fa-exclamation-triangle me-1"></i>{% trans "Déséq." %}{% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-day me-1"></i>{{ ecriture.date_ecriture|date:"d M Y" }} | 
+                                <i class="fas fa-book me-1"></i>{{ ecriture.journal.code_journal }} |
+                                <span class="text-success"><i class="fas fa-arrow-down me-1"></i>Deb: {{ ecriture.total_debit_lignes|floatformat:0|intcomma }}</span> | 
+                                <span class="text-danger"><i class="fas fa-arrow-up me-1"></i>Cred: {{ ecriture.total_credit_lignes|floatformat:0|intcomma }}</span>
+                            </small>
+                        </p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <p class="text-muted fs-5">{% trans "Aucune écriture récente trouvée pour ce dossier." %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="fas fa-cogs me-2"></i>{% trans "Rapports & Utilitaires" %}</h5></div>
+                <div class="card-body d-flex flex-wrap gap-2">
+                    <a href="#" class="btn btn-outline-secondary"><i class="fas fa-book-open me-1"></i>{% trans "Consultation Journaux" %}</a> {# TODO #}
+                    <a href="#" class="btn btn-outline-secondary"><i class="fas fa-file-invoice-dollar me-1"></i>{% trans "Grand Livre" %}</a> {# TODO #}
+                    <a href="#" class="btn btn-outline-secondary"><i class="fas fa-balance-scale me-1"></i>{% trans "Balance des Comptes" %}</a> {# TODO #}
+                    <a href="#" class="btn btn-outline-secondary"><i class="fas fa-landmark me-1"></i>{% trans "Rapprochement Bancaire" %}</a> {# TODO #}
+                    <a href="#" class="btn btn-outline-secondary"><i class="fas fa-chart-pie me-1"></i>{% trans "États Financiers" %}</a> {# TODO #}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# Vous pouvez ajouter ici du JS pour des graphiques ou des interactions plus poussées si besoin #}
+{% endblock %}

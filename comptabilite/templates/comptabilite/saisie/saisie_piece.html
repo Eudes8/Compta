@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="sage-container">
+    {% include "comptabilite/saisie/_toolbar.html" %}
+    
+    <div class="sage-grid-container">
+        <!-- Grille de saisie -->
+        {% include "comptabilite/saisie/_grid.html" %}
+    </div>
+
+    <!-- Totaux et contrôle d'équilibre -->
+    {% include "comptabilite/saisie/_totaux.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sage_grid.js' %}"></script>
+{% endblock %}

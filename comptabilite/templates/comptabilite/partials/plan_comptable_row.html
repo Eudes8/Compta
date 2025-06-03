@@ -1,0 +1,48 @@
+{% load static humanize %}
+
+<tr id="compte-row-{{ compte.pk }}" {% if messages and forloop.last %} {# Pour démo, pas idéal pour la prod #}
+    hx-swap-oob="true" {# Si on veut mettre à jour les messages en même temps #}
+    class="table-success" {# Exemple pour montrer la ligne mise à jour #}
+    hx-indicator="#loading-indicator-{{ compte.pk }}"
+    {% endif %}
+    >
+    <td>{{ compte.numero_compte }}</td>
+    <td>{{ compte.intitule_compte|truncatechars:45 }}</td>
+    <td><small>{{ compte.get_type_compte_display|default_if_none:"" }}</small></td>
+    <td><small>{{ compte.get_nature_compte_display|default_if_none:"" }}</small></td>
+    <td><small>{{ compte.compte_parent.numero_compte|default_if_none:"-" }}</small></td>
+    <td class="text-center">
+        {% if compte.est_lettrable %}<i class="fas fa-check-circle text-success" title="Lettrable"></i>{% else %}<i class="fas fa-times-circle text-secondary" title="Non lettrable"></i>{% endif %}
+    </td>
+    <td class="text-center">
+        <form hx-post="{% url 'comptabilite:toggle_actif_compte_pme' compte_pk=compte.pk %}" 
+              hx-target="closest tr" {# Cible la ligne entière pour la remplacer #}
+              hx-swap="outerHTML" 
+              class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link p-0 m-0 border-0 bg-transparent" 
+                    title="{% if compte.est_actif %}Désactiver{% else %}Activer{% endif %} ce compte">
+                {% if compte.est_actif %}
+                    <i class="fas fa-toggle-on text-success fs-5"></i>
+                {% else %}
+                    <i class="fas fa-toggle-off text-secondary fs-5"></i>
+                {% endif %}
+            </button>
+        </form>
+    </td>
+    <td>
+        {% if compte.compte_syscohada_ref %}
+            <small title="{{ compte.compte_syscohada_ref.intitule_compte }}">{{ compte.compte_syscohada_ref.numero_compte }}</small>
+        {% else %}-{% endif %}
+    </td>
+    <td class="text-end action-buttons">
+        <button type="button" class="btn btn-sm btn-outline-primary me-1" title="Modifier"
+                hx-get="{% url 'comptabilite:modifier_compte_pme' compte_pk=compte.pk %}"
+                hx-target="#modal-form-compte-pme-content"
+                hx-swap="innerHTML"
+                data-bs-toggle="modal" data-bs-target="#modalFormComptePME">
+            <i class="fas fa-edit"></i>
+        </button>
+        {# La suppression physique est généralement évitée ; on utilise le toggle actif/inactif #}
+    </td>
+</tr>

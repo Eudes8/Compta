@@ -1,0 +1,23 @@
+{% load i18n l10n humanize %}
+
+<tr class="sage-total-row">
+    <td colspan="5" class="text-end">
+        <strong>{% trans "TOTAUX" %}</strong>
+    </td>
+    <td class="sage-number-col">
+        <strong>{{ totaux.total_debit|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+    </td>
+    <td class="sage-number-col">
+        <strong>{{ totaux.total_credit|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+    </td>
+    <td></td>
+</tr>
+<tr class="sage-total-row sage-balance-row {% if totaux.solde == 0 %}sage-balanced{% else %}sage-unbalanced{% endif %}">
+    <td colspan="5" class="text-end">
+        <strong>{% trans "SOLDE" %}</strong>
+    </td>
+    <td colspan="2" class="sage-number-col">
+        <strong>{{ totaux.solde|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+    </td>
+    <td></td>
+</tr>

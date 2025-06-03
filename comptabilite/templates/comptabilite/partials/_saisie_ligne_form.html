@@ -1,0 +1,39 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<tr class="sage-table-row">
+    {% if form_ligne.fields %}
+        <td>{{ form_ligne.compte_general|as_crispy_field }}</td>
+        <td>{{ form_ligne.tiers_ligne|as_crispy_field }}</td>
+        <td>{{ form_ligne.libelle_ligne|as_crispy_field }}</td>
+        <td>{{ form_ligne.date_echeance_ligne|as_crispy_field }}</td>
+        <td>{{ form_ligne.numero_piece|as_crispy_field }}</td>
+        <td class="sage-number-col">{{ form_ligne.debit|as_crispy_field }}</td>
+        <td class="sage-number-col">{{ form_ligne.credit|as_crispy_field }}</td>
+        <td class="text-center">
+            <button type="button" 
+                    class="sage-btn sage-btn-danger" 
+                    onclick="document.body.dispatchEvent(new Event('LigneSupprimee')); this.closest('tr').remove();" 
+                    title="{% trans 'Supprimer la ligne' %}">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    {% else %}
+        <td colspan="8" class="text-center text-muted">
+            <em>{% trans "Ligne invalide ou champs manquants" %}</em>
+        </td>
+    {% endif %}
+</tr>
+
+{% if form_ligne.errors %}
+<tr class="sage-error-row">
+    <td colspan="8">
+        <div class="sage-message sage-message-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            {% for field, errors in form_ligne.errors.items %}
+                <div><strong>{{ field|capfirst }}:</strong> {{ errors|join:', ' }}</div>
+            {% endfor %}
+        </div>
+    </td>
+</tr>
+{% endif %}

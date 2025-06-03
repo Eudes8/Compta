@@ -1,0 +1,60 @@
+/* static/css/dossiers_pme_styles.css */
+body {
+    background-color: #f8f9fc; /* Couleur de fond claire, typique des dashboards */
+}
+
+.kpi-card {
+    border-left-width: .25rem !important;
+    margin-bottom: 1.5rem; /* mb-4 */
+    box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15)!important;
+}
+.kpi-card .card-body {
+    padding: 1.25rem;
+}
+.kpi-card .text-xs {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: .25rem;
+}
+.kpi-card .h5 {
+    margin-bottom: 0;
+    font-weight: 700;
+    color: #5a5c69;
+}
+.kpi-card .icon-circle {
+    font-size: 1.5rem; /* Ajustez selon la taille des icônes */
+    color: #dddfeb;
+}
+
+.border-left-primary { border-left-color: #4e73df !important; }
+.text-primary { color: #4e73df !important; }
+
+.border-left-success { border-left-color: #1cc88a !important; }
+.text-success { color: #1cc88a !important; }
+
+.border-left-info { border-left-color: #36b9cc !important; }
+.text-info { color: #36b9cc !important; }
+
+.border-left-warning { border-left-color: #f6c23e !important; }
+.text-warning { color: #f6c23e !important; }
+
+.module-link-card .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px; /* Hauteur minimale pour les cartes de module */
+    text-align: center;
+}
+.module-link-card .module-icon {
+    font-size: 2rem; /* Taille des icônes de module */
+    margin-bottom: 0.5rem;
+}
+.module-link-card h5 {
+    font-size: 1rem;
+    font-weight: bold;
+}
+.breadcrumb-item a {
+    text-decoration: none;
+}

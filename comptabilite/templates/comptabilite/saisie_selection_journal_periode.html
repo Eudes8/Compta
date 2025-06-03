@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% include "partials/_breadcrumb.html" with niveaux=niveaux_breadcrumb %}
+    {% include "partials/_messages.html" %}
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">{{ page_title }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.journal|as_crispy_field }}
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        {{ form.mois|as_crispy_field }}
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        {{ form.annee|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4 align-self-end mb-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-right me-2"></i>{% trans "Procéder à la Saisie" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

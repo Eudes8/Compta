@@ -1,0 +1,18 @@
+{% load i18n l10n humanize %}
+
+<tr class="total-row">
+    <td colspan="3" class="text-end"><strong>{% trans "TOTAUX" %} :</strong></td>
+    <td class="text-center">
+        <strong id="totalDebitDisplay">{{ totaux.total_debit|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+    </td>
+    <td class="text-center">
+        <strong id="totalCreditDisplay">{{ totaux.total_credit|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+    </td>
+    <td class="text-center">
+        {# La classe text-danger/text-success est appliquée par JavaScript dans saisie_piece_form.html #}
+        <span> 
+            <strong>{% trans "Solde:" %}</strong>
+            <strong id="soldeDisplay">{{ totaux.solde|default_if_none:"0.00"|floatformat:"2"|intcomma }}</strong>
+        </span>
+    </td>
+</tr>

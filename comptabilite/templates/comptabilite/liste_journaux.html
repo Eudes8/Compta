@@ -1,0 +1,70 @@
+{% extends "base.html" %} <!-- Adaptez si vous avez un base_comptabilite.html -->
+{% load crispy_forms_tags %} <!-- Si vous utilisez crispy-forms -->
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% include "partials/_breadcrumb.html" with niveaux_breadcrumb=niveaux_breadcrumb %} <!-- Adaptez le chemin si besoin -->
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>{{ page_title }}</h1>
+        <a href="{% url 'comptabilite:creer_journal' dossier_pk=dossier.pk %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> {% trans "Nouveau Journal" %}
+        </a>
+    </div>
+
+    {% include "partials/_messages.html" %}
+
+    {% if journaux %}
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>{% trans "Code" %}</th>
+                        <th>{% trans "Libellé" %}</th>
+                        <th>{% trans "Compte Contrepartie" %}</th>
+                        <th>{% trans "Actif" %}</th>
+                        <th class="text-end">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for journal in journaux %}
+                    <tr>
+                        <td>{{ journal.code_journal }}</td>
+                        <td>{{ journal.libelle }}</td>
+                        <td>{{ journal.compte_contrepartie_par_defaut }}</td>
+                        <td>
+                            {% if journal.est_actif %}
+                                <i class="fas fa-check text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times text-danger"></i>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'comptabilite:modifier_journal' journal_pk=journal.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'comptabilite:supprimer_journal' journal_pk=journal.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-3">Aucun journal comptable n'a été défini pour ce dossier. Vous pouvez en créer un en utilisant le bouton "Nouveau Journal".</div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{% url 'comptabilite:tableau_bord_compta' dossier_pk=dossier.pk %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au Tableau de Bord Comptabilité
+        </a>
+    </div>
+</div>
+{% endblock %}

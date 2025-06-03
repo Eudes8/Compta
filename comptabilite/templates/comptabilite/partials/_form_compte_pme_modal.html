@@ -1,0 +1,37 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<form method="post" action="{{ form_url }}" id="form-compte-pme">
+    {% csrf_token %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {{ form|crispy }}
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> {% trans "Fermer" %}
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i>
+            {% if is_creation %}{% trans "Créer le Compte" %}{% else %}{% trans "Enregistrer les Modifications" %}{% endif %}
+        </button>
+    </div>
+</form>
+{% if next_action %}
+<div class="success-message" style="display:none">{{ next_action }}</div>
+{% endif %}

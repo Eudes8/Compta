@@ -1,0 +1,41 @@
+{% load crispy_forms_tags %}
+
+<form hx-post="{{ form_url }}" {# L'URL est passée par la vue creer_modifier_compte_pme_view #}
+      hx-target="#modal-form-compte-pme-content" {# Se re-cible lui-même pour afficher les erreurs de validation du formulaire #}
+      hx-swap="innerHTML"
+      id="comptePmeFormInstance" {# Un ID pour le formulaire si besoin de le cibler en JS #}
+      class="needs-validation" novalidate {# Pour la validation Bootstrap côté client si activée #}
+      >
+    <div class="modal-body py-3 px-4"> {# Ajustement du padding #}
+        <h5 class="mb-3">{{ page_title_modal|default:"Formulaire Compte PME" }}</h5>
+        {% csrf_token %}
+        
+        {% if messages %} {# Afficher les messages globaux du formulaire ici aussi #}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {{ form|crispy }}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> Annuler
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i> 
+            {% if is_creation %}Créer le Compte{% else %}Enregistrer{% endif %}
+        </button>
+    </div>
+</form>

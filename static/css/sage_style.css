@@ -1,0 +1,432 @@
+/* Variables Sage 100 */
+:root {
+    --sage-bg-main: #f0f0f0;
+    --sage-border: #a0a0a0;
+    --sage-toolbar-bg: #e7e7e7;
+    --sage-cell-bg: #ffffff;
+    --sage-text: #212121;
+    --sage-header-bg: #305680;
+    --sage-total-bg: #e8e8e8;
+    --sage-highlight: #dbeeff;
+    --sage-grid-line: #d4d4d4;
+    --sage-balanced: #e6ffe6;
+    --sage-unbalanced: #ffe6e6;
+    --sage-input-border: #c5c5c5;
+    --sage-button-bg: #f8f8f8;
+    --sage-button-hover: #e8e8e8;
+    --sage-button-border: #c5c5c5;
+    --sage-focus-border: #66afe9;
+    --sage-selected-cell: #cce8ff;
+    --sage-selected-row: #f0f7ff;
+    --sage-popup-bg: #ffffff;
+    --sage-popup-shadow: rgba(0, 0, 0, 0.2);
+    --sage-calc-display: #f8f8f8;
+    --sage-calc-key: #ffffff;
+    --sage-calc-key-hover: #f0f0f0;
+}
+
+/* Reset et styles de base */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    background-color: var(--sage-bg-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Fenêtre principale */
+.sage-window {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: white;
+    border: 1px solid var(--sage-border);
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Barre d'outils principale */
+.sage-main-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--sage-toolbar-bg);
+    border-bottom: 1px solid var(--sage-border);
+}
+
+.sage-toolbar-group {
+    display: flex;
+    gap: 2px;
+}
+
+.sage-toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--sage-border);
+    margin: 0 4px;
+}
+
+/* Boutons de la barre d'outils */
+.sage-btn {
+    border: 1px solid var(--sage-button-border);
+    background: var(--sage-button-bg);
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--sage-text);
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sage-btn:hover {
+    background: var(--sage-button-hover);
+}
+
+.sage-btn:active {
+    background: var(--sage-button-hover);
+    border-color: var(--sage-border);
+}
+
+.sage-btn-icon {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+}
+
+.sage-btn-icon i {
+    font-size: 14px;
+}
+
+/* En-tête du journal */
+.sage-journal-header {
+    background: var(--sage-header-bg);
+    color: white;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sage-journal-title {
+    font-weight: bold;
+}
+
+/* Conteneur de la grille */
+.sage-grid-container {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+/* Grille principale */
+.sage-grid {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+/* En-têtes de colonnes */
+.sage-grid th {
+    background: var(--sage-header-bg);
+    color: white;
+    font-weight: normal;
+    text-align: left;
+    padding: 6px 8px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border: 1px solid var(--sage-border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Largeurs de colonnes */
+.sage-col-xs { width: 50px; }
+.sage-col-sm { width: 100px; }
+.sage-col-md { width: 150px; }
+.sage-col-lg { width: 250px; }
+
+/* Cellules */
+.sage-cell {
+    padding: 0;
+    border: 1px solid var(--sage-grid-line);
+    position: relative;
+}
+
+.sage-grid-row {
+    height: 22px;
+}
+
+.sage-grid-row:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.sage-grid-row:hover {
+    background-color: var(--sage-highlight);
+}
+
+.sage-grid-row.selected {
+    background-color: var(--sage-selected-row);
+}
+
+/* Styles des champs de saisie */
+.sage-cell input,
+.sage-cell select {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0 4px;
+    font-family: inherit;
+    font-size: inherit;
+    background: transparent;
+}
+
+.sage-cell input:focus,
+.sage-cell select:focus {
+    outline: none;
+    background: var(--sage-highlight);
+    box-shadow: inset 0 0 0 2px var(--sage-focus-border);
+}
+
+/* Cellules spécifiques */
+.sage-cell-number input {
+    text-align: right;
+    font-family: "Consolas", monospace;
+}
+
+.sage-cell-compte input,
+.sage-cell-tiers input {
+    font-family: "Consolas", monospace;
+}
+
+.sage-cell-lettrage {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Ligne des totaux */
+.sage-total-row td,
+.sage-balance-row td {
+    padding: 6px 8px;
+    font-weight: bold;
+    background: var(--sage-total-bg);
+    border-top: 2px solid var(--sage-border);
+}
+
+.sage-total-debit,
+.sage-total-credit,
+.sage-solde {
+    font-family: "Consolas", monospace;
+    text-align: right;
+}
+
+.sage-balance-row.sage-balanced {
+    background: var(--sage-balanced);
+}
+
+.sage-balance-row.sage-unbalanced {
+    background: var(--sage-unbalanced);
+}
+
+/* Barre de statut */
+.sage-status-bar {
+    display: flex;
+    gap: 20px;
+    padding: 4px 8px;
+    background: var(--sage-toolbar-bg);
+    border-top: 1px solid var(--sage-border);
+    font-size: 11px;
+    color: var(--sage-text);
+}
+
+.sage-status-cell {
+    white-space: nowrap;
+}
+
+.sage-status-message {
+    flex: 1;
+}
+
+/* Popups */
+.sage-popup {
+    display: none;
+    position: fixed;
+    background: var(--sage-popup-bg);
+    border: 1px solid var(--sage-border);
+    box-shadow: 0 4px 12px var(--sage-popup-shadow);
+    border-radius: 4px;
+    z-index: 1000;
+}
+
+.sage-popup.active {
+    display: block;
+}
+
+.sage-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: var(--sage-toolbar-bg);
+    border-bottom: 1px solid var(--sage-border);
+}
+
+.sage-popup-close {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.sage-popup-content {
+    padding: 12px;
+}
+
+/* Recherche de compte */
+.sage-search-box {
+    margin-bottom: 8px;
+}
+
+.sage-search-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--sage-input-border);
+    border-radius: 3px;
+}
+
+.sage-search-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Calculatrice */
+.sage-calculator {
+    width: 200px;
+}
+
+.sage-calc-display {
+    background: var(--sage-calc-display);
+    padding: 8px;
+    text-align: right;
+    font-family: "Consolas", monospace;
+    font-size: 16px;
+    border: 1px solid var(--sage-input-border);
+    margin-bottom: 8px;
+}
+
+.sage-calc-keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.sage-calc-key {
+    background: var(--sage-calc-key);
+    border: 1px solid var(--sage-button-border);
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.sage-calc-key:hover {
+    background: var(--sage-calc-key-hover);
+}
+
+/* Utilitaires */
+.text-end {
+    text-align: right;
+}
+
+/* Styles supplémentaires Sage */
+.sage-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.sage-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.sage-grid {
+    margin-bottom: 20px;
+}
+
+#saisie-grid {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#saisie-grid th,
+#saisie-grid td {
+    border: 1px solid #ddd;
+    padding: 4px;
+}
+
+#saisie-grid th {
+    background: #e9ecef;
+    font-weight: bold;
+}
+
+#saisie-grid input {
+    width: 100%;
+    border: none;
+    padding: 4px;
+}
+
+#saisie-grid input:focus {
+    background: #e8f0fe;
+    outline: none;
+}
+
+.piece-number {
+    width: 100px;
+}
+
+.date {
+    width: 120px;
+}
+
+.account-number {
+    width: 100px;
+}
+
+.label {
+    width: auto;
+}
+
+.debit,
+.credit {
+    width: 120px;
+    text-align: right;
+}
+
+.sage-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.totals {
+    display: flex;
+    gap: 20px;
+}
+
+.totals span {
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+}

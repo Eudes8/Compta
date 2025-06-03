@@ -1,0 +1,14 @@
+/* Sage Grid - Style principal */
+:root {
+    --sage-blue: #1e88e5;
+    --sage-bg: #f0f0f0;
+    --sage-border: #d1d1d1;
+    --sage-text: #333;
+    --sage-header: #2196f3;
+    --sage-highlight: #e3f2fd;
+    --sage-bg-light: #ffffff;
+    --sage-bg-header: #2196f3;
+    --sage-bg-dark: #1976d2;
+}
+
+/* Styles spécifiques pour la grille de saisie */

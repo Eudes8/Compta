@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %} {# Assurez-vous que i18n est chargé si vous utilisez des traductions #}
+
+{% block extra_css %}
+{# Vous pouvez ajouter des styles spécifiques ici si nécessaire #}
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .form-control-sm {
+        font-size: 0.875rem; /* Taille de police standard pour les petits contrôles */
+    }
+    #account-name-display {
+        min-height: 28px; /* Hauteur minimale pour éviter les sauts de page */
+        padding: 0.25rem 0.5rem;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-container" style="padding:0;">
+    <!-- Zone de saisie -->
+    <form id="saisie-form" onsubmit="return false;">
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:8px; margin-bottom:0; padding-left: 38px;"> 
+            <div style="flex:0 0 60px"><input type="text" id="input-jour" class="form-control form-control-sm" placeholder="{% trans 'Jour' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" id="input-piece" class="form-control form-control-sm" placeholder="{% trans 'N° pièce' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" id="input-facture" class="form-control form-control-sm" placeholder="{% trans 'N° facture' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" id="input-reference" class="form-control form-control-sm" placeholder="{% trans 'Référence' %}" style="width:100%;"></div>
+            <div style="flex:0 0 90px">
+                <input type="text" id="input-compte" class="form-control form-control-sm" placeholder="{% trans 'N° compte' %}" style="width:100%;" list="comptes-list">
+                <datalist id="comptes-list">
+                    {# Options peuplées par JavaScript au chargement. En production, envisagez un chargement AJAX ou via le contexte Django. #}
+                </datalist>
+            </div>
+            <div style="flex:0 0 90px">
+                <input type="text" id="input-compte-tiers" class="form-control form-control-sm" placeholder="{% trans 'N° compte t...' %}" style="width:100%;" list="tiers-list">
+                <datalist id="tiers-list">
+                    {# Options peuplées par JavaScript au chargement. #}
+                </datalist>
+            </div>
+            <div style="flex:0 0 160px"><input type="text" id="input-libelle" class="form-control form-control-sm" placeholder="{% trans 'Libellé écriture' %}" style="width:100%;"></div>
+            <div style="flex:0 0 120px"><input type="date" id="input-echeance" class="form-control form-control-sm" style="width:100%;"></div>
+            <div style="flex:0 0 40px"><input type="text" id="input-p" class="form-control form-control-sm" placeholder="P..." style="width:100%;"></div>
+            <div style="flex:0 0 90px"><input type="number" step="any" id="input-debit" class="form-control form-control-sm" placeholder="{% trans 'Débit' %}" style="width:100%; text-align:right;"></div>
+            <div style="flex:0 0 90px"><input type="number" step="any" id="input-credit" class="form-control form-control-sm" placeholder="{% trans 'Crédit' %}" style="width:100%; text-align:right;"></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin:12px 0 0 0;">
+            <button type="button" id="btn-nouveau" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> {% trans "Nouveau" %}
+            </button>
+            <button type="button" id="btn-supprimer" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> {% trans "Supprimer" %}
+            </button>
+            <button type="button" id="btn-enregistrer" class="btn btn-success btn-sm">
+                <i class="fas fa-save"></i> {% trans "Enregistrer Ligne" %}
+            </button>
+        </div>
+    </form>
+
+    <!-- Tableau principal interactif -->
+    <div style="display:flex; align-items:stretch; margin-top:15px;">
+        <div style="flex:1;">
+            <table id="tableur" class="table table-striped table-hover table-sm" style="width:100%; border-collapse:collapse;">
+                <thead class="table-light">
+                    <tr style="text-align: left;">
+                        <th style="width:30px;"></th> <!-- Colonne pour Checkbox -->
+                        <th style="width:60px;">{% trans "Jour" %}</th>
+                        <th style="width:80px;">{% trans "N° pièce" %}</th>
+                        <th style="width:80px;">{% trans "N° facture" %}</th>
+                        <th style="width:80px;">{% trans "Référence" %}</th>
+                        <th style="width:90px;">{% trans "N° compte..." %}</th>
+                        <th style="width:90px;">{% trans "N° compte t..." %}</th>
+                        <th style="width:160px;">{% trans "Libellé écriture" %}</th>
+                        <th style="width:120px;">{% trans "Date échéance" %}</th>
+                        <th style="width:40px;">P...</th>
+                        <th style="width:90px; text-align:right;">{% trans "Débit" %}</th>
+                        <th style="width:90px; text-align:right;">{% trans "Crédit" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableur-body">
+                    <!-- Lignes ajoutées dynamiquement -->
+                </tbody>
+            </table>
+            <!-- Nom du compte -->
+            <div id="account-name-display" class="account-name alert alert-info small" style="border-top:1px solid #bbb; padding:4px; font-size:15px; background:#fff;">
+                <!-- Nom du compte s'affichera ici -->
+            </div>
+            <!-- Totaux et solde -->
+            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                <tr>
+                    <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Totaux journal" %}</td>
+                    <td id="total-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+                    <td id="total-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+                </tr>
+                <tr>
+                    <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Solde à équilibrer" %}</td>
+                    <td id="solde-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+                    <td id="solde-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Données réelles pour les comptes et tiers, injectées par Django
+const comptesData = JSON.parse('{{ comptes_pme_json|escapejs }}');
+const tiersData = JSON.parse('{{ tiers_pme_json|escapejs }}');
+// Les lignes existantes pourraient être chargées ici si le JS les gérait au lieu du formset Django
+// const lignesExistantes = JSON.parse('{{ lignes_existantes_json|escapejs }}');
+
+// IDs pour les appels AJAX (injectés par Django)
+const dossierPk = "{{ current_dossier_pk }}";
+const journalPk = "{{ current_journal_pk }}";
+const anneeSaisie = "{{ current_annee_saisie }}";
+const moisSaisie = "{{ current_mois_saisie }}";
+
+// Fonctions Utilitaires
+function getInputValue(id) {
+    return document.getElementById(id).value.trim();
+}
+
+function clearInputs() {
+    const inputIds = ["input-jour", "input-piece", "input-facture", "input-reference", "input-compte", "input-compte-tiers", "input-libelle", "input-echeance", "input-p", "input-debit", "input-credit"];
+    inputIds.forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('account-name-display').textContent = ''; // Vider aussi le nom du compte
+    document.getElementById('input-jour').focus(); // Focus sur le premier champ
+}
+
+function formatNumberForDisplay(value) {
+    const num = parseFloat(String(value).replace(/\s/g, '').replace(',', '.'));
+    if (isNaN(num) || num === 0) return "-";
+    
+    const formatter = new Intl.NumberFormat('fr-FR', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0 // Pas de décimales pour les montants entiers
+    });
+    return formatter.format(num);
+}
+
+function updateTotals() {
+    let totalDebit = 0, totalCredit = 0;
+    document.querySelectorAll('#tableur-body tr').forEach(tr => {
+        const debitCell = tr.querySelector('.cell-debit');
+        const creditCell = tr.querySelector('.cell-credit');
+        if (debitCell && creditCell) {
+            const debitText = debitCell.textContent === '-' ? '0' : debitCell.textContent.replace(/\s/g, '').replace(',', '.');
+            const creditText = creditCell.textContent === '-' ? '0' : creditCell.textContent.replace(/\s/g, '').replace(',', '.');
+            
+            totalDebit += parseFloat(debitText) || 0;
+            totalCredit += parseFloat(creditText) || 0;
+        }
+    });
+
+    document.getElementById('total-debit').textContent = formatNumberForDisplay(totalDebit);
+    document.getElementById('total-credit').textContent = formatNumberForDisplay(totalCredit);
+    
+    const solde = totalDebit - totalCredit;
+
+    if (solde > 0) {
+        document.getElementById('solde-debit').textContent = formatNumberForDisplay(solde);
+        document.getElementById('solde-credit').textContent = "-";
+    } else if (solde < 0) {
+        document.getElementById('solde-debit').textContent = "-";
+        document.getElementById('solde-credit').textContent = formatNumberForDisplay(Math.abs(solde));
+    } else { // solde === 0
+        document.getElementById('solde-debit').textContent = "-";
+        document.getElementById('solde-credit').textContent = "-";
+    }
+}
+
+// Fonctions de gestion des lignes du tableur
+function enregistrerLigneSaisie() {
+    const debitValue = parseFloat(getInputValue('input-debit').replace(',', '.')) || 0;
+    const creditValue = parseFloat(getInputValue('input-credit').replace(',', '.')) || 0;
+    const compteGeneralValue = getInputValue('input-compte');
+    const tiersCodeValue = getInputValue('input-compte-tiers');
+    const libelleLigneValue = getInputValue('input-libelle');
+
+    // Validation simple: au moins un compte et un libellé, et soit débit soit crédit
+    if (!compteGeneralValue) {
+        alert("{% trans 'Veuillez sélectionner un compte général.' %}");
+        return;
+    }
+    if (!libelleLigneValue) {
+        alert("{% trans 'Veuillez saisir un libellé.' %}");
+        return;
+    }
+    if (debitValue === 0 && creditValue === 0) {
+        alert("{% trans 'Veuillez saisir au moins un compte, un libellé et un montant (débit ou crédit).' %}");
+        return;
+    }
+    if (debitValue !== 0 && creditValue !== 0) {
+        alert("{% trans 'Vous ne pouvez pas saisir un débit ET un crédit sur la même ligne.' %}");
+        return;
+    }
+
+    const ligneData = {
+        jour: getInputValue('input-jour'),
+        numero_piece: getInputValue('input-piece'),
+        numero_facture: getInputValue('input-facture'),
+        reference: getInputValue('input-reference'),
+        // Chercher la PK du compte général
+        compte_general: comptesData.find(c => c.numero_compte === compteGeneralValue)?.pk || null,
+        // Chercher la PK du tiers
+        tiers_ligne: tiersCodeValue ? (tiersData.find(t => t.code_tiers === tiersCodeValue)?.pk || null) : null,
+        libelle_ligne: libelleLigneValue,
+        date_echeance_ligne: getInputValue('input-echeance'),
+        p_field: getInputValue('input-p'), // Nommer ce champ correctement si besoin
+        debit: debitValue,
+        credit: creditValue,
+    };
+    if (!ligneData.compte_general && compteGeneralValue) {
+        alert("{% trans 'Compte général sélectionné invalide ou non trouvé dans les données de référence.' %}");
+        return;
+    }
+
+    const saveUrl = `/comptabilite/api/dossier/${dossierPk}/journal/${journalPk}/${anneeSaisie}/${moisSaisie}/enregistrer-ligne-ajax/`;
+    const csrfToken = document.querySelector('form#saisie-form input[name=csrfmiddlewaretoken]') ? 
+                      document.querySelector('form#saisie-form input[name=csrfmiddlewaretoken]').value : 
+                      "{{ csrf_token }}"; // Fallback si le token n'est pas dans un input du form
+
+    fetch(saveUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(ligneData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Ajouter la ligne au tableau HTML (comme avant, pour l'instant)
+            const tBody = document.getElementById('tableur-body');
+            const tr = document.createElement('tr');
+            // Si la vue retourne l'ID de la ligne, on peut l'ajouter ici: tr.dataset.ligneId = data.ligne_id;
+            tr.innerHTML = `
+                <td><input type="checkbox" class="form-check-input select-row"></td>
+                <td>${ligneData.jour}</td>
+                <td>${ligneData.numero_piece}</td>
+                <td>${ligneData.numero_facture}</td>
+                <td>${ligneData.reference}</td>
+                <td>${ligneData.compte_general}</td>
+                <td>${ligneData.tiers_ligne}</td>
+                <td>${ligneData.libelle_ligne}</td>
+                <td>${ligneData.date_echeance_ligne}</td>
+                <td>${ligneData.p_field}</td>
+                <td class="cell-debit" style="text-align:right;">${formatNumberForDisplay(ligneData.debit)}</td>
+                <td class="cell-credit" style="text-align:right;">${formatNumberForDisplay(ligneData.credit)}</td>
+            `;
+            tBody.appendChild(tr);
+            clearInputs();
+            updateTotals();
+            // Afficher un message de succès discret (ex: avec une petite notification temporaire)
+            console.log(data.message); // Pour le débogage
+        } else {
+            // Afficher les erreurs de validation ou autres erreurs serveur
+            let errorMessages = Object.values(data.errors).flat().join('\n');
+            alert("{% trans 'Erreur de sauvegarde:' %}\n" + errorMessages);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur AJAX:', error);
+        alert("{% trans 'Une erreur réseau est survenue lors de la sauvegarde de la ligne.' %}");
+    });
+}
+
+function ajouterLigneVide() {
+    const tBody = document.getElementById('tableur-body');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="checkbox" class="form-check-input select-row"></td>
+        <td></td> <td></td> <td></td> <td></td> <td></td> 
+        <td></td> <td></td> <td></td> <td></td> 
+        <td class="cell-debit" style="text-align:right;">-</td>
+        <td class="cell-credit" style="text-align:right;">-</td>
+    `;
+    tBody.appendChild(tr);
+    updateTotals(); 
+    clearInputs(); // Vide les champs et remet le focus sur 'input-jour'
+}
+
+// Gestionnaires d'événements
+document.getElementById('btn-nouveau').addEventListener('click', ajouterLigneVide);
+document.getElementById('btn-enregistrer').addEventListener('click', enregistrerLigneSaisie);
+
+document.getElementById('btn-supprimer').addEventListener('click', function() {
+    const tBody = document.getElementById('tableur-body');
+    const rowsToDelete = tBody.querySelectorAll('tr .select-row:checked');
+    rowsToDelete.forEach(checkbox => {
+        tBody.removeChild(checkbox.closest('tr'));
+    });
+    updateTotals();
+});
+
+document.getElementById('input-compte').addEventListener('input', function() {
+    const numeroCompte = this.value;
+    const accountNameDisplay = document.getElementById('account-name-display');
+    const compteTrouve = comptesData.find(c => c.numero_compte === numeroCompte);
+
+    if (compteTrouve) {
+        accountNameDisplay.textContent = compteTrouve.intitule_compte;
+    } else {
+        accountNameDisplay.textContent = numeroCompte ? '{% trans "Recherche..." %}' : '';
+        // Optionnellement, si le compte n'est pas dans la liste initiale,
+        // vous pourriez toujours faire un appel AJAX ici pour le chercher en direct.
+    }
+});
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Le formset Django devrait gérer les totaux initiaux si des lignes sont chargées.
+    // Si le JS charge les lignes, alors updateTotals() serait appelé après.
+    // Pour l'instant, on appelle updateTotals() au cas où.
+    updateTotals(); 
+
+    // Peupler datalist pour les comptes
+    const comptesDatalist = document.getElementById('comptes-list');
+    comptesData.forEach(compte => {
+        const option = document.createElement('option');
+        option.value = compte.numero_compte;
+        option.textContent = compte.intitule_compte;
+        comptesDatalist.appendChild(option);
+    });
+
+    // Peupler datalist pour les tiers
+    const tiersDatalist = document.getElementById('tiers-list');
+    tiersData.forEach(tiers => {
+        const option = document.createElement('option');
+        option.value = tiers.code_tiers;
+        option.textContent = tiers.nom_ou_raison_sociale;
+        tiersDatalist.appendChild(option);
+    });
+    
+    document.getElementById('input-jour').focus(); // Focus initial
+});
+
+// Navigation au clavier: Entrée pour enregistrer
+function handleEnterKey(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); 
+        enregistrerLigneSaisie();
+    }
+}
+document.getElementById('input-credit').addEventListener('keypress', handleEnterKey);
+document.getElementById('input-debit').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        const creditInput = document.getElementById('input-credit');
+        // Si crédit est vide ou 0, et débit a une valeur, on peut enregistrer
+        if ((!creditInput.value || parseFloat(creditInput.value.replace(',', '.')) === 0) && (this.value && parseFloat(this.value.replace(',', '.')) !== 0) ) {
+            event.preventDefault(); 
+            enregistrerLigneSaisie();
+        } else if (this.value && parseFloat(this.value.replace(',', '.')) !== 0) {
+            // Si débit a une valeur, et crédit aussi, on passe au champ crédit
+             creditInput.focus();
+        }
+    }
+});
+
+// TODO pour la version de production:
+// 1. Remplacer comptesDataMock et tiersDataMock par des appels AJAX à votre backend Django
+//    pour récupérer les comptes et tiers réels du dossier PME.
+// 2. Implémenter la logique de sauvegarde réelle de la pièce comptable (l'ensemble des lignes)
+//    vers le backend via un appel AJAX lorsque l'utilisateur clique sur un bouton "Valider Pièce" (non présent actuellement).
+// 3. Ajouter des validations plus robustes (côté client et surtout côté serveur).
+// 4. Gérer les erreurs de manière plus détaillée (ex: affichage des erreurs venant du serveur).
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<tbody id="lignes-ecriture-container" 
+       hx-trigger="LigneAjoutee from:body, LigneSupprimee from:body, input from:.debit-field, input from:.credit-field"
+       hx-post="{% url 'comptabilite:saisie_piece' dossier_pk=dossier.pk journal_pk=journal.pk annee=annee_saisie mois=mois_saisie %}?action=recalculer_totaux"
+       hx-target="#totaux-container"
+       hx-swap="innerHTML"
+       hx-indicator="#htmx-activity-indicator"
+       class="sage-table-body">
+    {{ formset_lignes.management_form }}
+    {% for form in formset_lignes.forms %}
+        {% include "comptabilite/partials/_saisie_ligne_form.html" with form_ligne=form %}
+    {% endfor %}
+</tbody>
+<tfoot id="totaux-container" class="sage-table-footer">
+    {% include "comptabilite/partials/_saisie_totaux.html" with totaux=totaux %}
+</tfoot>

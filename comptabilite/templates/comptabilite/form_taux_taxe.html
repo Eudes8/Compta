@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-3 mb-5">
+    {% include "partials/_breadcrumb.html" with niveaux_breadcrumb=niveaux_breadcrumb %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-3"><h4 class="mb-0">{{ page_title }}</h4></div>
+                <div class="card-body p-4">
+                    {% include "partials/_messages.html" %}
+                    <form method="post" novalidate>{% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> {% trans "Enregistrer" %}</button>
+                            <a href="{% url 'comptabilite:liste_taux_taxes' dossier_pk=dossier.pk %}" class="btn btn-secondary ms-2">{% trans "Annuler" %}</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

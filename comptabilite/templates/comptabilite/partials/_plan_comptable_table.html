@@ -1,0 +1,102 @@
+{% load i18n %}
+{% load l10n %}
+{% load humanize %}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-sm align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th>{% trans "Numéro" %}</th>
+                <th>{% trans "Intitulé" %}</th>
+                <th>{% trans "Type" %}</th>
+                <th>{% trans "Nature" %}</th>
+                <th>{% trans "Compte Parent" %}</th>
+                <th class="text-center">{% trans "Lettrable" %}</th>
+                <th class="text-center">{% trans "Actif" %}</th>
+                <th>{% trans "Réf. SYSCOHADA" %}</th>
+                <th class="text-end">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compte in comptes %}
+            <tr id="compte-row-{{ compte.pk }}">
+                <td class="text-monospace">{{ compte.numero_compte }}</td>
+                <td>{{ compte.intitule_compte|truncatechars:45 }}</td>
+                <td><small>{{ compte.get_type_compte_display|default_if_none:"" }}</small></td>
+                <td><small>{{ compte.get_nature_compte_display|default_if_none:"" }}</small></td>
+                <td><small>{{ compte.compte_parent.numero_compte|default_if_none:"-" }}</small></td>
+                <td class="text-center">
+                    {% if compte.est_lettrable %}
+                        <i class="fas fa-check-circle text-success" title="{% trans 'Lettrable' %}"></i>
+                    {% else %}
+                        <i class="fas fa-times-circle text-secondary" title="{% trans 'Non lettrable' %}"></i>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <form method="post" 
+                          action="{% url 'comptabilite:toggle_actif_compte_pme' compte_pk=compte.pk %}" 
+                          class="d-inline toggle-actif-form">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="btn btn-link p-0 m-0 border-0 bg-transparent" 
+                                title="{% if compte.est_actif %}{% trans 'Désactiver' %}{% else %}{% trans 'Activer' %}{% endif %} {% trans 'ce compte' %}">
+                            {% if compte.est_actif %}
+                                <i class="fas fa-toggle-on text-success fs-5"></i>
+                            {% else %}
+                                <i class="fas fa-toggle-off text-secondary fs-5"></i>
+                            {% endif %}
+                        </button>
+                    </form>
+                </td>
+                <td>
+                    {% if compte.compte_syscohada_ref %}
+                        <small title="{{ compte.compte_syscohada_ref.intitule_compte }}">
+                            {{ compte.compte_syscohada_ref.numero_compte }}
+                        </small>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <div class="btn-group">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary"
+                                title="{% trans 'Modifier' %}"
+                                data-modify-url="{% url 'comptabilite:modifier_compte_pme' compte_pk=compte.pk %}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if not compte.est_actif %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="{% trans 'Supprimer' %}"
+                                    onclick="confirmDelete('{{ compte.pk }}', '{{ compte.numero_compte }}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmation pour la désactivation des comptes
+    document.querySelectorAll('.toggle-actif-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            if (!confirm("{% trans 'Êtes-vous sûr de vouloir modifier le statut de ce compte ?' %}")) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+
+function confirmDelete(comptePk, numeroCompte) {
+    if (confirm("{% trans 'Êtes-vous sûr de vouloir supprimer définitivement le compte' %} " + numeroCompte + " ?")) {
+        // TODO: Implement account deletion via AJAX
+        console.log('Suppression du compte:', comptePk);
+    }
+}
+</script>

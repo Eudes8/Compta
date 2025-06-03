@@ -1,0 +1,233 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Optima Gest PME{% endblock %}</title>
+    
+    <!-- Styles de base -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Styles de l'application -->
+    <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dossiers_pme_styles.css' %}">
+    
+    <!-- Styles Sage -->
+    <link rel="stylesheet" href="{% static 'css/sage_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sage_grid_new.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'css/comptabilite_sage.css' %}">
+    <link rel="stylesheet" href="{% static 'css/comptabilite.css' %}">
+    
+    <!-- Style spécifique pour la fenêtre Sage -->
+    <style>
+        :root {
+            --sage-blue: #1e88e5;
+            --sage-bg: #f0f0f0;
+            --sage-border: #d1d1d1;
+            --sage-text: #333;
+            --sage-header: #2196f3;
+            --sage-highlight: #e3f2fd;
+            --sage-bg-light: #ffffff;
+            --sage-bg-header: #2196f3;
+            --sage-bg-dark: #1976d2;
+        }
+        
+        /* Style de base */
+        body { 
+            font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0; 
+            min-height: 100vh;
+            background-color: var(--sage-bg);
+        }
+        
+        /* En-tête générale */
+        header { 
+            background: var(--sage-bg-header);
+            color: white;
+            padding: 1em;
+            text-align: center;
+            margin-bottom: 2em;
+        }
+        
+        /* Pied de page */
+        footer { 
+            background-color: var(--sage-bg-dark);
+            color: white;
+            text-align: center;
+            padding: 1em;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        /* Conteneur principal */
+        .container { 
+            max-width: 1200px;
+            margin: auto;
+            padding: 1em;
+            margin-bottom: 5em;
+        }
+
+        /* Support des fenêtres Sage */
+        .sage-i7-window {
+            background: white;
+            border: 1px solid #999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 20px);
+        }
+
+        /* Conteneur de contenu Sage */
+        .sage-content {
+            flex: 1;
+            overflow: auto;
+            background: white;
+        }
+    
+/* Basic styles for the new Sage Grid interface */
+
+.grid-container {
+    padding: 5px;
+    font-family: Arial, sans-serif;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    padding: 5px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    font-size: 11px;
+}
+
+.header-row > * {
+    padding: 2px;
+}
+
+.header-row .label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.header-row .field {
+    padding: 2px 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    margin-right: 5px;
+}
+
+.header-row button {
+    padding: 2px 5px;
+    margin-left: 5px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.section-header {
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    font-size: 11px;
+}
+
+.grid-table th,
+.grid-table td {
+    padding: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+.grid-table th {
+    background-color: #f8f8f8;
+    font-weight: normal;
+    text-align: left;
+}
+
+.visualization-space {
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border: none;
+}
+
+.account-name {
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+    font-size: 11px;
+}
+
+.totals, .balance {
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.amount {
+    text-align: right;
+    padding-right: 5px;
+    font-family: monospace;
+}
+
+/* Styles spécifiques pour correspondre à l'image */
+.grid-table td {
+    border-bottom: 1px dotted #ccc;
+}
+
+.visualization-space span {
+    margin: 2px 0;
+}
+
+.field.compte {
+    min-width: 80px;
+}
+
+.field.libelle {
+    min-width: 200px;
+}
+
+.field.montant {
+    min-width: 100px;
+    text-align: right;
+}
+</style>
+</head>
+<body>
+    {% if not hide_header %}
+    <header>
+        <h1>{% block header_title %}Optima Gest PME{% endblock %}</h1>
+    </header>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if not hide_footer %}
+    <footer>
+        <p>&copy; {% now "Y" %} Optima Gest PME. Tous droits réservés.</p>
+    </footer>
+    {% endif %}
+
+    <!-- Scripts de base -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    
+    <!-- Scripts spécifiques -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

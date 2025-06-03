@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load l10n %} 
+{% load humanize %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .table th, .table td { vertical-align: middle; }
+    .action-buttons .btn { margin: 0 2px; }
+    .spinner-border-sm { width: 1rem; height: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% include "partials/_breadcrumb.html" with niveaux=niveaux_breadcrumb %}
+    {% include "partials/_messages.html" %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h1 class="h3 mb-0">{{ page_title }}</h1>
+        <div class="btn-group">
+            <a href="{% url 'comptabilite:tableau_bord_compta' dossier_pk=dossier.pk %}" 
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> {% trans "Retour TDB Compta" %}
+            </a>
+            <button type="button" 
+                    class="btn btn-primary" 
+                    id="btn-ajouter-compte-pme" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#modalFormComptePME">
+                <i class="fas fa-plus me-1"></i> {% trans "Nouveau Compte" %}
+            </button>
+        </div>
+    </div>
+
+    {% if comptes %}
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                {% include "comptabilite/partials/_plan_comptable_table.html" with comptes=comptes %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            {% trans "Aucun compte PME trouvé pour ce dossier. Vous pouvez initialiser le plan à partir du plan SYSCOHADA par défaut." %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal pour formulaire de création/modification de compte PME -->
+<div class="modal fade" id="modalFormComptePME" tabindex="-1" aria-labelledby="modalFormComptePMELabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalFormComptePMELabel">{% trans "Compte PME" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modal-form-compte-pme-content">
+        <!-- Le contenu du formulaire sera chargé ici via HTMX -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalFormComptePME = document.getElementById('modalFormComptePME');
+    const modalContent = document.getElementById('modal-form-compte-pme-content');
+    const btnAjouterComptePME = document.getElementById('btn-ajouter-compte-pme');
+
+    // Fonction pour charger le formulaire dans le modal
+    function loadFormInModal(url) {
+        modalContent.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">{% trans "Chargement..." %}</span>
+                </div>
+            </div>`;
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.text();
+        })
+        .then(html => {
+            modalContent.innerHTML = html;
+            initializeFormHandlers();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            modalContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "Une erreur est survenue lors du chargement du formulaire." %}
+                </div>`;
+        });
+    }
+
+    // Initialisation des gestionnaires de formulaire
+    function initializeFormHandlers() {
+        const form = modalContent.querySelector('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+
+            // Désactiver le bouton et montrer le spinner
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{% trans "Traitement..." %}`;
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Vérifier le message de succès
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const successMessage = tempDiv.querySelector('.success-message');
+                
+                if (successMessage) {
+                    const modal = bootstrap.Modal.getInstance(modalFormComptePME);
+                    modal.hide();
+                    window.location.href = successMessage.textContent;
+                } else {
+                    // Mettre à jour le formulaire avec les erreurs
+                    modalContent.innerHTML = html;
+                    initializeFormHandlers();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% trans "Une erreur est survenue lors de l'enregistrement." %}
+                    </div>`;
+            });
+        });
+    }
+
+    // Gestionnaire pour le bouton "Nouveau Compte"
+    btnAjouterComptePME.addEventListener('click', function(e) {
+        e.preventDefault();
+        const url = "{% url 'comptabilite:creer_compte_pme' dossier_pk=dossier.pk %}";
+        loadFormInModal(url);
+    });
+
+    // Gestionnaire pour les boutons de modification
+    document.addEventListener('click', function(e) {
+        const modifyBtn = e.target.closest('[data-modify-url]');
+        if (modifyBtn) {
+            e.preventDefault();
+            const url = modifyBtn.dataset.modifyUrl;
+            const modal = new bootstrap.Modal(modalFormComptePME);
+            modal.show();
+            loadFormInModal(url);
+        }
+    });
+
+    // Réinitialiser le modal quand il est fermé
+    modalFormComptePME.addEventListener('hidden.bs.modal', function () {
+        modalContent.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">{% trans "Chargement..." %}</span>
+                </div>
+            </div>`;
+    });
+});
+</script>
+{% endblock %}

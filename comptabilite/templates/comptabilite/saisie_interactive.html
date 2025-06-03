@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/sage_style.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Ajouter les data attributes pour les variables Django -->
+<div class="sage-window" 
+     data-dossier-pk="{{ dossier.pk|default:'0' }}"
+     data-initial-journal="{{ journaux.first.pk|default:'0' }}"
+     data-comptes-lookup-url="{% url 'comptabilite:api_comptes_lookup' dossier_pk=dossier.pk %}"
+     data-tiers-lookup-url="{% url 'comptabilite:api_tiers_lookup' dossier_pk=dossier.pk %}"
+     data-journal-info-url="{% url 'comptabilite:api_journal_info' journal_pk=0 %}"
+     data-save-piece-url="{% url 'comptabilite:api_save_piece' %}">
+
+    <!-- Barre de menus style Sage -->
+    <div class="sage-menubar">
+        <button class="sage-menu-item" id="btnNewPiece">
+            <i class="fas fa-file"></i> Nouvelle Pièce
+        </button>
+        <button class="sage-menu-item" id="btnSave">
+            <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <button class="sage-menu-item" id="btnDelete">
+            <i class="fas fa-trash"></i> Supprimer
+        </button>
+        <span class="sage-menu-separator"></span>
+        <button class="sage-menu-item" id="btnCalc">
+            <i class="fas fa-calculator"></i> Calculatrice (F2)
+        </button>
+        <button class="sage-menu-item" id="btnSearch">
+            <i class="fas fa-search"></i> Rechercher
+        </button>
+        <span class="sage-menu-separator"></span>
+        <button class="sage-menu-item" id="btnBalance">
+            <i class="fas fa-balance-scale"></i> Équilibrer
+        </button>
+    </div>
+
+    <!-- Barre d'outils et en-tête -->
+    <div class="sage-toolbar">
+        <div class="journal-selector">
+            <label>Journal:</label>
+            <select id="journalSelect" class="sage-select" data-url="{% url 'comptabilite:api_journal_info' journal_pk=0 %}">
+                {% for journal in journaux %}
+                    <option value="{{ journal.pk }}" data-type="{{ journal.type_journal }}">
+                        {{ journal.code_journal }} - {{ journal.libelle }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="period-selector">
+            <label>Période:</label>
+            <input type="month" id="periodSelect" class="sage-input">
+        </div>
+        <div class="piece-info">
+            <label>N° Pièce:</label>
+            <input type="text" id="pieceNumber" class="sage-input">
+            <label>Date:</label>
+            <input type="date" id="pieceDate" class="sage-input">
+            <label>Référence:</label>
+            <input type="text" id="pieceRef" class="sage-input">
+        </div>
+    </div>
+
+    <!-- Grille de saisie -->
+    <div class="sage-grid" id="sageGrid">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-jour">Jour</th>
+                    <th class="col-piece">N° Pièce</th>
+                    <th class="col-compte">N° Compte</th>
+                    <th class="col-tiers">Tiers</th>
+                    <th class="col-libelle">Libellé</th>
+                    <th class="col-echeance">Échéance</th>
+                    <th class="col-debit">Débit</th>
+                    <th class="col-credit">Crédit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Les lignes seront ajoutées par JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pied de page avec totaux -->
+    <div class="sage-footer">
+        <div class="totals">
+            <div class="total-item">
+                <label>Total Débit:</label>
+                <span id="totalDebit" class="total-value">0.00</span>
+            </div>
+            <div class="total-item">
+                <label>Total Crédit:</label>
+                <span id="totalCredit" class="total-value">0.00</span>
+            </div>
+            <div class="total-item" id="balanceContainer">
+                <label>Différence:</label>
+                <span id="balance" class="total-value">0.00</span>
+            </div>
+        </div>
+        <div class="status-bar">
+            <span id="statusMessage"></span>
+        </div>
+    </div>
+
+    <!-- Composants popups -->
+    <div id="calculatorPanel" class="sage-calculator" style="display:none;">
+        <div class="calc-display">
+            <input type="text" id="calcDisplay" readonly>
+        </div>
+        <div class="calc-buttons">
+            <button class="calc-btn">7</button><button class="calc-btn">8</button><button class="calc-btn">9</button><button class="calc-op">÷</button>
+            <button class="calc-btn">4</button><button class="calc-btn">5</button><button class="calc-btn">6</button><button class="calc-op">×</button>
+            <button class="calc-btn">1</button><button class="calc-btn">2</button><button class="calc-btn">3</button><button class="calc-op">-</button>
+            <button class="calc-btn">0</button><button class="calc-btn">.</button><button class="calc-eq">=</button><button class="calc-op">+</button>
+        </div>
+    </div>
+
+    <!-- Lookup pour comptes -->
+    <div id="compteLookup" class="sage-lookup" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Compte</th>
+                    <th>Intitulé</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Lookup pour tiers -->
+    <div id="tiersLookup" class="sage-lookup" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Nom/Raison sociale</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Inclusion des scripts -->
+<script src="{% static 'js/sage_grid_api.js' %}"></script>
+<script src="{% static 'js/sage_grid_ui.js' %}"></script>
+<script src="{% static 'js/sage_grid.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.sage-window');
+    
+    // Récupérer les variables depuis les data attributes
+    const config = {
+        dossierPk: container.dataset.dossierPk,
+        initialJournal: container.dataset.initialJournal,
+        urls: {
+            comptesLookup: container.dataset.comptesLookupUrl,
+            tiersLookup: container.dataset.tiersLookupUrl,
+            journalInfo: container.dataset.journalInfoUrl,
+            savePiece: container.dataset.savePieceUrl
+        }
+    };
+
+    // Initialiser l'API
+    const api = new SageGridAPI(config);
+
+    // Initialiser la grille
+    const grid = new SageGrid({
+        api: api,
+        dossierPk: config.dossierPk,
+        initialJournal: config.initialJournal,
+        currentDate: new Date()
+    });
+});
+</script>
+{% endblock %}

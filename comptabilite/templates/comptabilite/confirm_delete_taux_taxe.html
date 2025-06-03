@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="container mt-3 mb-5">
+    {% include "partials/_breadcrumb.html" with niveaux_breadcrumb=niveaux_breadcrumb %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white"><h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{{ page_title }}</h4></div>
+                <div class="card-body p-4">
+                    <p class="lead">Supprimer le taux de taxe : <strong>{{ taxe_instance.libelle }} ({{ taxe_instance.code_taxe }})</strong> ?</p>
+                    <div class="alert alert-warning small mt-3"><i class="fas fa-info-circle me-1"></i> Action irréversible. Préférez désactiver.</div>
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Supprimer</button>
+                        <a href="{% url 'comptabilite:liste_taux_taxes' dossier_pk=dossier.pk %}" class="btn btn-secondary ms-2">Annuler</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
