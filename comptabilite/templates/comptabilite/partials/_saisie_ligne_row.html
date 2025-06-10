@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load humanize %}
+<tr data-ligne-id="{{ ligne.pk }}" hx-swap-oob="beforeend:#tableur-body">
+    <td><input type="checkbox" class="form-check-input select-row"></td>
+    <td>{{ ligne.jour|default:"" }}</td>
+    <td>{{ ligne.numero_piece|default:"" }}</td>
+    <td>{{ ligne.numero_facture|default:"" }}</td>
+    <td>{{ ligne.reference|default:"" }}</td>
+    <td>{{ ligne.compte_general.numero_compte|default:"" }}</td>
+    <td>{{ ligne.tiers_ligne.code_tiers|default_if_none:"" }}</td>
+    <td>{{ ligne.libelle_ligne|default:"" }}</td>
+    <td>{{ ligne.date_echeance_ligne|date:"d/m/Y"|default:"" }}</td>
+    <td>{{ ligne.p_field|default:"" }}</td> {# Assurez-vous que p_field est un vrai champ ou adaptez #}
+    <td class="cell-debit" style="text-align:right;">{{ ligne.debit|intcomma|default:"-" }}</td>
+    <td class="cell-credit" style="text-align:right;">{{ ligne.credit|intcomma|default:"-" }}</td>
+</tr>

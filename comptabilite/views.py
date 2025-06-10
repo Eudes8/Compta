@@ -14,7 +14,7 @@ import json
 from django.core.management import call_command
 from django.conf import settings
 import os
-# from django.template.loader import render_to_string # Not used in this specific context
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST # Pour la nouvelle vue AJAX
 from django.core.serializers.json import DjangoJSONEncoder # Pour sérialiser les objets QuerySet
 from django.http import Http404 # Import Http404 for explicit handling
@@ -1021,18 +1021,39 @@ def enregistrer_ligne_ajax_view(request, dossier_pk, journal_pk, annee, mois):
             logger.warning(f"JSONDecodeError in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk}): {e_json} - Body: {request.body[:200]}")
             return JsonResponse({'success': False, 'errors': {'__all__': [_("Données JSON invalides.")]}}, status=400)
 
+        compte_general_numero = data.get('compte_general')
+        tiers_ligne_code = data.get('tiers_ligne')
+        compte_general_pk = None
+        tiers_ligne_pk = None
+
+        if compte_general_numero:
+            try:
+                compte_general_obj = CompteComptablePME.objects.get(dossier_pme=dossier, numero_compte=compte_general_numero, est_actif=True)
+                compte_general_pk = compte_general_obj.pk
+            except CompteComptablePME.DoesNotExist:
+                return JsonResponse({'success': False, 'errors': {'compte_general': [_("Compte général non trouvé ou inactif.")]}}, status=400)
+        
+        if tiers_ligne_code:
+            try:
+                tiers_ligne_obj = Tiers.objects.get(dossier_pme=dossier, code_tiers=tiers_ligne_code, est_actif=True)
+                tiers_ligne_pk = tiers_ligne_obj.pk
+            except Tiers.DoesNotExist:
+                # Ce n'est pas bloquant si le compte n'est pas un compte de tiers
+                pass
+
+
         # Utiliser un formulaire pour valider les données de la ligne
         form_ligne_data = {
             'jour': data.get('jour'),
             'numero_piece': data.get('numero_piece'),
             'numero_facture': data.get('numero_facture'),
             'reference': data.get('reference'),
-            'compte_general': data.get('compte_general'), # Doit être l'ID du compte
-            'tiers_ligne': data.get('tiers_ligne'),       # Doit être l'ID du tiers
+            'compte_general': compte_general_pk, # Utiliser le PK trouvé
+            'tiers_ligne': tiers_ligne_pk,       # Utiliser le PK trouvé
             'libelle_ligne': data.get('libelle_ligne'),
             'date_echeance_ligne': data.get('date_echeance_ligne') or None,
-            'debit': data.get('debit', '0.00'), # Garder en string pour le formulaire, qui convertira
-            'credit': data.get('credit', '0.00'),# Idem
+            'debit': data.get('debit', '0.00'),
+            'credit': data.get('credit', '0.00'),
         }
         
         form = LigneEcritureSaisieForm(form_ligne_data, dossier_pme=dossier)
@@ -1073,72 +1094,34 @@ def enregistrer_ligne_ajax_view(request, dossier_pk, journal_pk, annee, mois):
                 'reference': ligne.reference,
             }
             
-            return JsonResponse({
-                'success': True,
-                'message': _("Ligne enregistrée avec succès."),
-                'ligne': ligne_data,
+            # Rendre les partiels HTML
+            context_ligne = {'ligne': ligne}
+            html_ligne = render_to_string('comptabilite/partials/_saisie_ligne_row.html', context_ligne, request=request)
+            
+            context_totaux = {
                 'totaux': {
-                    'total_debit': str(totaux_agg['total_debit']),
-                    'total_credit': str(totaux_agg['total_credit']),
-                    'solde': str(totaux_agg['total_debit'] - totaux_agg['total_credit']),
+                    'total_debit': totaux_agg['total_debit'],
+                    'total_credit': totaux_agg['total_credit'],
+                    'solde': totaux_agg['total_debit'] - totaux_agg['total_credit'],
                 }
-            })
-        else:
-            logger.warning(f"Form errors in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk}): {form.errors.as_json()}")
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-    except Exception as e:
-        logger.exception(f"Unhandled exception in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk})")
-        return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}}, status=500)
-            ligne.ecriture = ecriture_conteneur # Assurer la liaison explicite
-            
-            # Déterminer le prochain ordre pour la ligne
-            max_ordre = LigneEcriture.objects.filter(ecriture=ecriture_conteneur).aggregate(Max('ordre'))['ordre__max']
-            ligne.ordre = (max_ordre if max_ordre is not None else -1) + 1
-            
-            ligne.save()
-            
-            # Recalculer les totaux après la sauvegarde
-            totaux_agg = ecriture_conteneur.lignes_ecriture.aggregate(
-                total_debit=Coalesce(Sum('debit'), Value(Decimal('0.00'))),
-                total_credit=Coalesce(Sum('credit'), Value(Decimal('0.00')))
-            )
-            
-            # Préparer les données de la ligne pour la réponse JSON
-            ligne_data = {
-                'id': ligne.pk,
-                'ordre': ligne.ordre,
-                'compte_general_id': ligne.compte_general.pk,
-                'compte_general_numero': ligne.compte_general.numero_compte,
-                'compte_general_intitule': ligne.compte_general.intitule_compte,
-                'tiers_ligne_id': ligne.tiers_ligne.pk if ligne.tiers_ligne else None,
-                'tiers_ligne_code': ligne.tiers_ligne.code_tiers if ligne.tiers_ligne else None,
-                'tiers_ligne_nom': ligne.tiers_ligne.nom_ou_raison_sociale if ligne.tiers_ligne else None,
-                'libelle_ligne': ligne.libelle_ligne,
-                'date_echeance_ligne': ligne.date_echeance_ligne.strftime('%Y-%m-%d') if ligne.date_echeance_ligne else None,
-                'debit': str(ligne.debit),
-                'credit': str(ligne.credit),
-                'jour': ligne.jour,
-                'numero_piece': ligne.numero_piece,
-                'numero_facture': ligne.numero_facture,
-                'reference': ligne.reference,
             }
-            
-            return JsonResponse({
-                'success': True,
-                'message': _("Ligne enregistrée avec succès."),
-                'ligne': ligne_data,
-                'totaux': {
-                    'total_debit': str(totaux_agg['total_debit']),
-                    'total_credit': str(totaux_agg['total_credit']),
-                    'solde': str(totaux_agg['total_debit'] - totaux_agg['total_credit']),
-                }
-            })
+            html_totaux = render_to_string('comptabilite/partials/_saisie_totaux_interactive.html', context_totaux, request=request)
+
+            response = HttpResponse(status=204) # No content, HTMX will use OOB swaps
+            response['HX-Swap-OOB'] = f"{html_ligne} <div hx-swap-oob='true' id='saisie-totaux-table'>{html_totaux}</div>"
+            # Déclencher un événement pour vider les champs de saisie côté client
+            response['HX-Trigger'] = json.dumps({'ligneEnregistree': True, 'clearSaisieFields': True})
+            return response
         else:
             logger.warning(f"Form errors in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk}): {form.errors.as_json()}")
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            # Retourner les erreurs de formulaire pour affichage si nécessaire (peut être géré par HTMX aussi)
+            # Pour l'instant, on retourne une erreur simple. Une meilleure approche serait de retourner un partial d'erreur.
+            return JsonResponse({'success': False, 'errors': form.errors.get_json_data(escape_html=True)}, status=400)
 
+    except Http404 as e: # Catch Http404 explicitement
+        logger.warning(f"Http404 in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk}): {e}")
+        return JsonResponse({'success': False, 'errors': {'__all__': [_("Ressource non trouvée.")]}}, status=404)
     except Exception as e:
         logger.exception(f"Unhandled exception in enregistrer_ligne_ajax_view (dossier {dossier_pk}, journal {journal_pk})")
-        return JsonResponse({'success': False, 'errors': {'__all__': [str(e)]}}, status=500)
+        return JsonResponse({'success': False, 'errors': {'__all__': [_("Une erreur interne est survenue.")]}}, status=500)
 

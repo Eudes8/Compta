@@ -1,0 +1,23 @@
+{% load i18n %}
+{% load humanize %}
+<!-- Totaux et solde -->
+<table style="width:100%; border-collapse:collapse; margin-top:10px;" id="saisie-totaux-table">
+    <tr>
+        <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Totaux journal" %}</td>
+        <td id="total-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">{{ totaux.total_debit|intcomma|default:"-" }}</td>
+        <td id="total-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">{{ totaux.total_credit|intcomma|default:"-" }}</td>
+    </tr>
+    <tr>
+        <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Solde à équilibrer" %}</td>
+        {% if totaux.solde > 0 %}
+            <td id="solde-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">{{ totaux.solde|intcomma }}</td>
+            <td id="solde-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+        {% elif totaux.solde < 0 %}
+            <td id="solde-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+            <td id="solde-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">{{ totaux.solde|abs|intcomma }}</td>
+        {% else %}
+            <td id="solde-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+            <td id="solde-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
+        {% endif %}
+    </tr>
+</table>

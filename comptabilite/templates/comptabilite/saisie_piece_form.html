@@ -22,29 +22,35 @@
 {% block content %}
 <div class="grid-container" style="padding:0;">
     <!-- Zone de saisie -->
-    <form id="saisie-form" onsubmit="return false;">
-        <div style="display:flex; flex-direction:row; align-items:baseline; gap:8px; margin-bottom:0; padding-left: 38px;"> 
-            <div style="flex:0 0 60px"><input type="text" id="input-jour" class="form-control form-control-sm" placeholder="{% trans 'Jour' %}" style="width:100%;"></div>
-            <div style="flex:0 0 80px"><input type="text" id="input-piece" class="form-control form-control-sm" placeholder="{% trans 'N° pièce' %}" style="width:100%;"></div>
-            <div style="flex:0 0 80px"><input type="text" id="input-facture" class="form-control form-control-sm" placeholder="{% trans 'N° facture' %}" style="width:100%;"></div>
-            <div style="flex:0 0 80px"><input type="text" id="input-reference" class="form-control form-control-sm" placeholder="{% trans 'Référence' %}" style="width:100%;"></div>
+    <form id="saisie-form"
+          hx-post="{% url 'comptabilite:ajouter_ligne_ecriture_ajax' dossier_pk=dossier.pk journal_pk=journal.pk annee=annee_saisie mois=mois_saisie %}"
+          hx-target="#tableur-body"
+          hx-swap="beforeend"
+          hx-indicator="#loading-indicator">
+          {# hx-on::after-request="if(event.detail.successful) this.reset();" est géré par HX-Trigger maintenant #}
+        {% csrf_token %}
+        <div style="display:flex; flex-direction:row; align-items:baseline; gap:8px; margin-bottom:0; padding-left: 38px;">
+            <div style="flex:0 0 60px"><input type="text" name="jour" id="input-jour" class="form-control form-control-sm" placeholder="{% trans 'Jour' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" name="numero_piece" id="input-piece" class="form-control form-control-sm" placeholder="{% trans 'N° pièce' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" name="numero_facture" id="input-facture" class="form-control form-control-sm" placeholder="{% trans 'N° facture' %}" style="width:100%;"></div>
+            <div style="flex:0 0 80px"><input type="text" name="reference" id="input-reference" class="form-control form-control-sm" placeholder="{% trans 'Référence' %}" style="width:100%;"></div>
             <div style="flex:0 0 90px">
-                <input type="text" id="input-compte" class="form-control form-control-sm" placeholder="{% trans 'N° compte' %}" style="width:100%;" list="comptes-list">
+                <input type="text" name="compte_general" id="input-compte" class="form-control form-control-sm" placeholder="{% trans 'N° compte' %}" style="width:100%;" list="comptes-list">
                 <datalist id="comptes-list">
                     {# Options peuplées par JavaScript au chargement. En production, envisagez un chargement AJAX ou via le contexte Django. #}
                 </datalist>
             </div>
             <div style="flex:0 0 90px">
-                <input type="text" id="input-compte-tiers" class="form-control form-control-sm" placeholder="{% trans 'N° compte t...' %}" style="width:100%;" list="tiers-list">
+                <input type="text" name="tiers_ligne" id="input-compte-tiers" class="form-control form-control-sm" placeholder="{% trans 'N° compte t...' %}" style="width:100%;" list="tiers-list">
                 <datalist id="tiers-list">
                     {# Options peuplées par JavaScript au chargement. #}
                 </datalist>
             </div>
-            <div style="flex:0 0 160px"><input type="text" id="input-libelle" class="form-control form-control-sm" placeholder="{% trans 'Libellé écriture' %}" style="width:100%;"></div>
-            <div style="flex:0 0 120px"><input type="date" id="input-echeance" class="form-control form-control-sm" style="width:100%;"></div>
-            <div style="flex:0 0 40px"><input type="text" id="input-p" class="form-control form-control-sm" placeholder="P..." style="width:100%;"></div>
-            <div style="flex:0 0 90px"><input type="number" step="any" id="input-debit" class="form-control form-control-sm" placeholder="{% trans 'Débit' %}" style="width:100%; text-align:right;"></div>
-            <div style="flex:0 0 90px"><input type="number" step="any" id="input-credit" class="form-control form-control-sm" placeholder="{% trans 'Crédit' %}" style="width:100%; text-align:right;"></div>
+            <div style="flex:0 0 160px"><input type="text" name="libelle_ligne" id="input-libelle" class="form-control form-control-sm" placeholder="{% trans 'Libellé écriture' %}" style="width:100%;"></div>
+            <div style="flex:0 0 120px"><input type="date" name="date_echeance_ligne" id="input-echeance" class="form-control form-control-sm" style="width:100%;"></div>
+            <div style="flex:0 0 40px"><input type="text" name="p_field" id="input-p" class="form-control form-control-sm" placeholder="P..." style="width:100%;"></div>
+            <div style="flex:0 0 90px"><input type="text" name="debit" id="input-debit" class="form-control form-control-sm" placeholder="{% trans 'Débit' %}" style="width:100%; text-align:right;"></div>
+            <div style="flex:0 0 90px"><input type="text" name="credit" id="input-credit" class="form-control form-control-sm" placeholder="{% trans 'Crédit' %}" style="width:100%; text-align:right;"></div>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin:12px 0 0 0;">
             <button type="button" id="btn-nouveau" class="btn btn-primary btn-sm">
@@ -53,9 +59,10 @@
             <button type="button" id="btn-supprimer" class="btn btn-danger btn-sm">
                 <i class="fas fa-trash"></i> {% trans "Supprimer" %}
             </button>
-            <button type="button" id="btn-enregistrer" class="btn btn-success btn-sm">
+            <button type="submit" id="btn-enregistrer" class="btn btn-success btn-sm">
                 <i class="fas fa-save"></i> {% trans "Enregistrer Ligne" %}
             </button>
+            <span id="loading-indicator" class="htmx-indicator">{% trans "Chargement..." %}</span>
         </div>
     </form>
 
@@ -87,19 +94,10 @@
             <div id="account-name-display" class="account-name alert alert-info small" style="border-top:1px solid #bbb; padding:4px; font-size:15px; background:#fff;">
                 <!-- Nom du compte s'affichera ici -->
             </div>
-            <!-- Totaux et solde -->
-            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-                <tr>
-                    <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Totaux journal" %}</td>
-                    <td id="total-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
-                    <td id="total-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
-                </tr>
-                <tr>
-                    <td colspan="10" style="text-align:right; font-weight:bold; padding-right: 5px;">{% trans "Solde à équilibrer" %}</td>
-                    <td id="solde-debit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
-                    <td id="solde-credit" style="text-align:right; font-family:monospace; font-weight:bold; width:90px;">-</td>
-                </tr>
-            </table>
+            <!-- Totaux et solde (sera mis à jour par HTMX OOB Swap) -->
+            <div id="saisie-totaux-table-container">
+                 {% include "comptabilite/partials/_saisie_totaux_interactive.html" with totaux=totaux %}
+            </div>
         </div>
     </div>
 </div>
@@ -145,135 +143,16 @@ function formatNumberForDisplay(value) {
     return formatter.format(num);
 }
 
-function updateTotals() {
-    let totalDebit = 0, totalCredit = 0;
-    document.querySelectorAll('#tableur-body tr').forEach(tr => {
-        const debitCell = tr.querySelector('.cell-debit');
-        const creditCell = tr.querySelector('.cell-credit');
-        if (debitCell && creditCell) {
-            const debitText = debitCell.textContent === '-' ? '0' : debitCell.textContent.replace(/\s/g, '').replace(',', '.');
-            const creditText = creditCell.textContent === '-' ? '0' : creditCell.textContent.replace(/\s/g, '').replace(',', '.');
-            
-            totalDebit += parseFloat(debitText) || 0;
-            totalCredit += parseFloat(creditText) || 0;
-        }
-    });
-
-    document.getElementById('total-debit').textContent = formatNumberForDisplay(totalDebit);
-    document.getElementById('total-credit').textContent = formatNumberForDisplay(totalCredit);
-    
-    const solde = totalDebit - totalCredit;
-
-    if (solde > 0) {
-        document.getElementById('solde-debit').textContent = formatNumberForDisplay(solde);
-        document.getElementById('solde-credit').textContent = "-";
-    } else if (solde < 0) {
-        document.getElementById('solde-debit').textContent = "-";
-        document.getElementById('solde-credit').textContent = formatNumberForDisplay(Math.abs(solde));
-    } else { // solde === 0
-        document.getElementById('solde-debit').textContent = "-";
-        document.getElementById('solde-credit').textContent = "-";
-    }
-}
+// updateTotals() est maintenant géré par HTMX via OOB swap.
 
 // Fonctions de gestion des lignes du tableur
-function enregistrerLigneSaisie() {
-    const debitValue = parseFloat(getInputValue('input-debit').replace(',', '.')) || 0;
-    const creditValue = parseFloat(getInputValue('input-credit').replace(',', '.')) || 0;
-    const compteGeneralValue = getInputValue('input-compte');
-    const tiersCodeValue = getInputValue('input-compte-tiers');
-    const libelleLigneValue = getInputValue('input-libelle');
-
-    // Validation simple: au moins un compte et un libellé, et soit débit soit crédit
-    if (!compteGeneralValue) {
-        alert("{% trans 'Veuillez sélectionner un compte général.' %}");
-        return;
-    }
-    if (!libelleLigneValue) {
-        alert("{% trans 'Veuillez saisir un libellé.' %}");
-        return;
-    }
-    if (debitValue === 0 && creditValue === 0) {
-        alert("{% trans 'Veuillez saisir au moins un compte, un libellé et un montant (débit ou crédit).' %}");
-        return;
-    }
-    if (debitValue !== 0 && creditValue !== 0) {
-        alert("{% trans 'Vous ne pouvez pas saisir un débit ET un crédit sur la même ligne.' %}");
-        return;
-    }
-
-    const ligneData = {
-        jour: getInputValue('input-jour'),
-        numero_piece: getInputValue('input-piece'),
-        numero_facture: getInputValue('input-facture'),
-        reference: getInputValue('input-reference'),
-        // Chercher la PK du compte général
-        compte_general: comptesData.find(c => c.numero_compte === compteGeneralValue)?.pk || null,
-        // Chercher la PK du tiers
-        tiers_ligne: tiersCodeValue ? (tiersData.find(t => t.code_tiers === tiersCodeValue)?.pk || null) : null,
-        libelle_ligne: libelleLigneValue,
-        date_echeance_ligne: getInputValue('input-echeance'),
-        p_field: getInputValue('input-p'), // Nommer ce champ correctement si besoin
-        debit: debitValue,
-        credit: creditValue,
-    };
-    if (!ligneData.compte_general && compteGeneralValue) {
-        alert("{% trans 'Compte général sélectionné invalide ou non trouvé dans les données de référence.' %}");
-        return;
-    }
-
-    const saveUrl = `/comptabilite/api/dossier/${dossierPk}/journal/${journalPk}/${anneeSaisie}/${moisSaisie}/enregistrer-ligne-ajax/`;
-    const csrfToken = document.querySelector('form#saisie-form input[name=csrfmiddlewaretoken]') ? 
-                      document.querySelector('form#saisie-form input[name=csrfmiddlewaretoken]').value : 
-                      "{{ csrf_token }}"; // Fallback si le token n'est pas dans un input du form
-
-    fetch(saveUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify(ligneData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Ajouter la ligne au tableau HTML (comme avant, pour l'instant)
-            const tBody = document.getElementById('tableur-body');
-            const tr = document.createElement('tr');
-            // Si la vue retourne l'ID de la ligne, on peut l'ajouter ici: tr.dataset.ligneId = data.ligne_id;
-            tr.innerHTML = `
-                <td><input type="checkbox" class="form-check-input select-row"></td>
-                <td>${ligneData.jour}</td>
-                <td>${ligneData.numero_piece}</td>
-                <td>${ligneData.numero_facture}</td>
-                <td>${ligneData.reference}</td>
-                <td>${ligneData.compte_general}</td>
-                <td>${ligneData.tiers_ligne}</td>
-                <td>${ligneData.libelle_ligne}</td>
-                <td>${ligneData.date_echeance_ligne}</td>
-                <td>${ligneData.p_field}</td>
-                <td class="cell-debit" style="text-align:right;">${formatNumberForDisplay(ligneData.debit)}</td>
-                <td class="cell-credit" style="text-align:right;">${formatNumberForDisplay(ligneData.credit)}</td>
-            `;
-            tBody.appendChild(tr);
-            clearInputs();
-            updateTotals();
-            // Afficher un message de succès discret (ex: avec une petite notification temporaire)
-            console.log(data.message); // Pour le débogage
-        } else {
-            // Afficher les erreurs de validation ou autres erreurs serveur
-            let errorMessages = Object.values(data.errors).flat().join('\n');
-            alert("{% trans 'Erreur de sauvegarde:' %}\n" + errorMessages);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur AJAX:', error);
-        alert("{% trans 'Une erreur réseau est survenue lors de la sauvegarde de la ligne.' %}");
-    });
-}
+// enregistrerLigneSaisie() est maintenant géré par HTMX via le formulaire.
 
 function ajouterLigneVide() {
+    // Cette fonction pourrait être conservée si on veut un bouton "Nouvelle Ligne Vide"
+    // qui ne soumet rien au serveur mais prépare juste le DOM.
+    // Pour une approche purement HTMX, on pourrait avoir un endpoint qui retourne une ligne vide.
+    // Pour l'instant, on la laisse car le bouton "Nouveau" existe.
     const tBody = document.getElementById('tableur-body');
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -284,21 +163,29 @@ function ajouterLigneVide() {
         <td class="cell-credit" style="text-align:right;">-</td>
     `;
     tBody.appendChild(tr);
-    updateTotals(); 
+    // updateTotals(); // Plus nécessaire ici, HTMX s'en charge après une sauvegarde.
     clearInputs(); // Vide les champs et remet le focus sur 'input-jour'
 }
 
 // Gestionnaires d'événements
 document.getElementById('btn-nouveau').addEventListener('click', ajouterLigneVide);
-document.getElementById('btn-enregistrer').addEventListener('click', enregistrerLigneSaisie);
+// Le bouton 'btn-enregistrer' est maintenant de type submit et géré par HTMX.
 
 document.getElementById('btn-supprimer').addEventListener('click', function() {
     const tBody = document.getElementById('tableur-body');
     const rowsToDelete = tBody.querySelectorAll('tr .select-row:checked');
+    
+    // Pour la suppression avec HTMX, chaque ligne devrait avoir un moyen de se supprimer
+    // ou on pourrait avoir un endpoint qui prend les IDs des lignes à supprimer.
+    // Pour l'instant, on garde la suppression côté client simple.
+    // Une amélioration serait d'avoir un hx-delete sur chaque ligne ou un hx-post sur ce bouton
+    // qui envoie les IDs des lignes cochées.
     rowsToDelete.forEach(checkbox => {
         tBody.removeChild(checkbox.closest('tr'));
     });
-    updateTotals();
+    // Après suppression client, il faudrait idéalement resynchroniser les totaux avec le serveur
+    // ou recalculer côté client si on garde une partie de la logique ici.
+    // Pour une approche full HTMX, la suppression déclencherait un appel serveur qui mettrait à jour les totaux.
 });
 
 document.getElementById('input-compte').addEventListener('input', function() {
@@ -317,10 +204,7 @@ document.getElementById('input-compte').addEventListener('input', function() {
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
-    // Le formset Django devrait gérer les totaux initiaux si des lignes sont chargées.
-    // Si le JS charge les lignes, alors updateTotals() serait appelé après.
-    // Pour l'instant, on appelle updateTotals() au cas où.
-    updateTotals(); 
+    // updateTotals(); // Plus nécessaire ici, les totaux initiaux sont dans le template.
 
     // Peupler datalist pour les comptes
     const comptesDatalist = document.getElementById('comptes-list');
@@ -343,34 +227,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('input-jour').focus(); // Focus initial
 });
 
-// Navigation au clavier: Entrée pour enregistrer
-function handleEnterKey(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); 
-        enregistrerLigneSaisie();
-    }
-}
-document.getElementById('input-credit').addEventListener('keypress', handleEnterKey);
-document.getElementById('input-debit').addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        const creditInput = document.getElementById('input-credit');
-        // Si crédit est vide ou 0, et débit a une valeur, on peut enregistrer
-        if ((!creditInput.value || parseFloat(creditInput.value.replace(',', '.')) === 0) && (this.value && parseFloat(this.value.replace(',', '.')) !== 0) ) {
-            event.preventDefault(); 
-            enregistrerLigneSaisie();
-        } else if (this.value && parseFloat(this.value.replace(',', '.')) !== 0) {
-            // Si débit a une valeur, et crédit aussi, on passe au champ crédit
-             creditInput.focus();
-        }
-    }
+// Gestionnaire pour l'événement personnalisé déclenché par HTMX après sauvegarde
+document.body.addEventListener('clearSaisieFields', function() {
+    clearInputs();
 });
 
-// TODO pour la version de production:
-// 1. Remplacer comptesDataMock et tiersDataMock par des appels AJAX à votre backend Django
-//    pour récupérer les comptes et tiers réels du dossier PME.
-// 2. Implémenter la logique de sauvegarde réelle de la pièce comptable (l'ensemble des lignes)
-//    vers le backend via un appel AJAX lorsque l'utilisateur clique sur un bouton "Valider Pièce" (non présent actuellement).
-// 3. Ajouter des validations plus robustes (côté client et surtout côté serveur).
-// 4. Gérer les erreurs de manière plus détaillée (ex: affichage des erreurs venant du serveur).
+// La navigation au clavier pour enregistrer est maintenant gérée par le type="submit" du bouton
+// et le comportement par défaut du formulaire. Si on veut garder la logique spécifique
+// de passer au champ crédit, il faudrait la réévaluer dans le contexte HTMX.
+
+// TODO pour la version de production (certains sont déjà en partie adressés):
+// 1. Assurer que les données comptesData et tiersData sont bien injectées et utilisées.
+//    (Actuellement, elles sont utilisées pour le datalist et la recherche de PK côté client avant l'envoi AJAX)
+//    Pour une approche plus HTMX, les lookups pourraient aussi être des appels HTMX.
+// 2. Logique de sauvegarde de la pièce entière (bouton "Valider Pièce") - reste à faire.
+// 3. Validations robustes côté serveur (déjà en place en partie avec le ModelForm).
+//    Les erreurs du serveur devraient être affichées via HTMX (ex: en remplaçant une div d'erreurs).
+// 4. Améliorer la gestion des erreurs (ex: afficher les messages d'erreur du serveur dans le formulaire).
 </script>
 {% endblock %}

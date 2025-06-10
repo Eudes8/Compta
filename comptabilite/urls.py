@@ -23,7 +23,7 @@ urlpatterns = [
 
     # Nouvelle URL AJAX pour l'ajout de ligne (corrigée)
     path('api/dossier/<int:dossier_pk>/journal/<int:journal_pk>/<int:annee>/<int:mois>/enregistrer-ligne-ajax/',
-         views.ajouter_ligne_ecriture_ajax,
+         views.enregistrer_ligne_ajax_view,
          name='ajouter_ligne_ecriture_ajax'),
 
     path('dossier/<int:dossier_pk>/plan-comptable/', views.plan_comptable_view, name='plan_comptable'),
